@@ -1,0 +1,14 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended", "plugin:mocha/recommended", "prettier"],
+  "parserOptions": {
+    "ecmaVersion": 12
+  },
+  "rules": {
+    "no-unused-vars": ["error", { "varsIgnorePattern": "^_" }],
+    "mocha/no-setup-in-describe" : "off"
+  }
+}
