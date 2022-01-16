@@ -15,8 +15,7 @@ async function main() {
   // Initial staking index
   const initialIndex = '1000000000'
 
-  const { provider } = deployer
-  const firstEpochTime = 1635897600 // 2021-11-3 00:00 UTC
+  const firstEpochTime = 1642377600 // 2022-1-17 00:00 UTC
   console.log('First epoch timestamp: ' + firstEpochTime)
 
   // What epoch will be first epoch
