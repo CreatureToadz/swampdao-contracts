@@ -6,10 +6,11 @@ const UniswapV2ABI = require('./IUniswapV2Factory.json').abi
 const DAI = '0xa3Fa99A148fA48D14Ed51d610c367C61876997F1'
 const WETH = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 const UNISWAP_FACTORY = '0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f'
+const TIME_LOCK = '1' // 6600 blocks ~ 86400 seconds
 
 async function main() {
   const [deployer] = await ethers.getSigners()
-  const daoAddr = '0x929A27c46041196e1a49C7B459d63eC9A20cd879'
+  const daoAddr = '0x87f0FC01d3D05ECD83a9e400B51D4c06bc5cEfeb'
   console.log('Deploying contracts with the account: ' + deployer.address)
 
   // Initial staking index
@@ -62,7 +63,7 @@ async function main() {
     DAI,
     lpAddress,
     bondingCalculator.address,
-    '43200'
+    TIME_LOCK
   )
   await treasury.deployTransaction.wait()
   console.log('treasury deployed: ' + treasury.address)

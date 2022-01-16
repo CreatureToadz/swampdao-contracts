@@ -264,7 +264,6 @@ contract FlyzTreasury is Ownable, IFlyzTreasury {
         }
 
         uint256 value = valueOfToken(_token, _amount);
-        require(value <= excessReserves(), 'Insufficient reserves');
 
         totalReserves = totalReserves.sub(value);
         emit ReservesUpdated(totalReserves);
@@ -282,7 +281,6 @@ contract FlyzTreasury is Ownable, IFlyzTreasury {
         override
     {
         require(isRewardManager[msg.sender], 'Not approved');
-        require(_amount <= excessReserves(), 'Insufficient reserves');
 
         IERC20Mintable(FLYZ).mint(_recipient, _amount);
 
