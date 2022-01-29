@@ -134,6 +134,7 @@ async function main() {
     rewardAddress,
     '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419' // ETH feed
   )
+  await lpBondDepository.deployTransaction.wait()
 
   console.log(
     JSON.stringify({
