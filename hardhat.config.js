@@ -7,6 +7,7 @@ const deployer = process.env.DEPLOYER_PRIVATE_KEY
 const etherscanApiKey = process.env.ETHERSCAN_API_KEY
 const chainId = Number(process.env.FORK_CHAIN_ID) || 31337
 const rinkebyRPC = process.env.RINKEBY_RPC
+const mainnetRPC = process.env.MAINNET_RPC
 
 module.exports = {
   solidity: {
@@ -32,6 +33,10 @@ module.exports = {
     hardhat: {
       chainId,
       gas: 'auto',
+    },
+    mainnet: {
+      url: mainnetRPC,
+      accounts: deployer ? [deployer] : deployer,
     },
     rinkeby: {
       url: rinkebyRPC,
