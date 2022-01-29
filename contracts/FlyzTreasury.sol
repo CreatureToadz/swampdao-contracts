@@ -116,20 +116,20 @@ contract FlyzTreasury is Ownable, IFlyzTreasury {
 
     constructor(
         address _FLYZ,
-        address _DAI,
-        address _FLYZDAI,
+        address _LOOK,
+        address _FLYZETH,
         address _bondCalculator,
         uint256 _blocksNeededForQueue
     ) {
         require(_FLYZ != address(0));
         FLYZ = _FLYZ;
 
-        isReserveToken[_DAI] = true;
-        reserveTokens.push(_DAI);
+        isReserveToken[_LOOK] = true;
+        reserveTokens.push(_LOOK);
 
-        isLiquidityToken[_FLYZDAI] = true;
-        liquidityTokens.push(_FLYZDAI);
-        bondCalculator[_FLYZDAI] = _bondCalculator;
+        isLiquidityToken[_FLYZETH] = true;
+        liquidityTokens.push(_FLYZETH);
+        bondCalculator[_FLYZETH] = _bondCalculator;
 
         blocksNeededForQueue = _blocksNeededForQueue;
     }

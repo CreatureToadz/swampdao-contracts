@@ -9,11 +9,16 @@ const UNISWAP_FACTORY = '0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f'
 const zeroAddress = '0x0000000000000000000000000000000000000000'
 const TIME_LOCK = '1' // 6600 blocks ~ 86400 seconds
 const firstEpochTime = 1642377600 // 2022-1-17 00:00 UTC set to the launch date
+
 console.log('First epoch timestamp: ' + firstEpochTime)
 
 async function main() {
   const deployer = await ethers.getSigner()
+
   console.log('Deploying contracts with the account: ' + deployer.address)
+
+  // change to DAO or vault address
+  const rewardAddress = deployer.address
 
   // Initial staking index
   const initialIndex = '1000000000'
@@ -101,17 +106,49 @@ async function main() {
   )
   await stakingHelper.deployTransaction.wait()
 
+  const LOOKSBondDepository = await ethers.getContractFactory(
+    'FlyzLOOKSBondDepository'
+  )
+  const looksBondDepository = await LOOKSBondDepository.deploy(
+    flyz.address,
+    sFlyz.address,
+    LOOKS,
+    treasury.address,
+    rewardAddress,
+    staking.address,
+    '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419', // ETH feed
+    '0xdc00ba87cc2d99468f7f34bc04cbf72e111a32f7' // LOOKS-ETH LP
+  )
+  await looksBondDepository.deployTransaction.wait()
+
+  const FlyzETHLPBondDepository = await ethers.getContractFactory(
+    'FlyzETHLPBondDepository'
+  )
+  let lpBondDepository = await FlyzETHLPBondDepository.deploy(
+    flyz.address,
+    sFlyz.address,
+    lpAddress,
+    treasury.address,
+    staking.address,
+    bondingCalculator.address,
+    rewardAddress,
+    '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419' // ETH feed
+  )
+
   console.log(
     JSON.stringify({
       FLYZ_ADDRESS: flyz.address,
       SFLYZ_ADDRESS: sFlyz.address,
       FLYZ_ETH: lpAddress,
+      LOOKS,
       TREASURY_ADDRESS: treasury.address,
       BONDING_CALC_ADDRESS: bondingCalculator.address,
       STAKING_ADDRESS: staking.address,
       STAKING_HELPER_ADDRESS: stakingHelper.address,
       STAKING_WARMUP_ADDRESS: stakingWarmup.address,
       STAKING_DISTRIBUTOR_ADDRESS: stakingDistributor.address,
+      LOOKS_BOND_DEPOSITORY_ADDRESS: looksBondDepository.address,
+      LP_BOND_DEPOSITORY_ADDRESS: lpBondDepository.address,
     })
   )
 
@@ -141,18 +178,24 @@ async function main() {
   await (await treasury.queue('4', deployer.address)).wait()
   await (await treasury.queue('8', deployer.address)).wait()
   await (await treasury.queue('8', stakingDistributor.address)).wait()
+  await (await treasury.queue('8', looksBondDepository.address)).wait()
+  await (await treasury.queue('8', lpBondDepository.address)).wait()
+  // await (await treasury.queue('8', claim contract address)).wait()
+
+  console.log('queue treasury')
 
   // toggle 24 hours later
-  // await (await treasury.toggle('0', deployer.address, zeroAddress)).wait()
-  // await (await treasury.toggle('4', deployer.address, zeroAddress)).wait()
-  // await (
-  //   await treasury.toggle('8', deployer.address, zeroAddress)
-  // ).wait()
+  await (await treasury.toggle('0', deployer.address, zeroAddress)).wait()
+  await (await treasury.toggle('4', deployer.address, zeroAddress)).wait()
+  await (await treasury.toggle('8', deployer.address, zeroAddress)).wait()
   // await (
   //   await treasury.toggle('8', stakingDistributor.address, zeroAddress)
   // ).wait()
-
-  console.log('setup treasury')
+  // await (await treasury.toggle('8', looksBondDepository.address, zeroAddress)).wait()
+  // await (
+  //   await treasury.toggle('8', lpBondDepository.address, zeroAddress)
+  // ).wait()
+  // await (await treasury.toggle('8', claim contract address, zeroAddress)).wait()
 }
 
 main()

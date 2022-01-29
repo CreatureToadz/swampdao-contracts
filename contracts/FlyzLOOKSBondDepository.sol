@@ -5,6 +5,7 @@ import './interfaces/IFlyzTreasury.sol';
 import './interfaces/IFlyzStaking.sol';
 import './interfaces/IFlyzBondingCalculator.sol';
 import './interfaces/IsFlyzERC20.sol';
+import './interfaces/IUniswapV2Pair.sol';
 
 import './types/Ownable.sol';
 import './types/ERC20.sol';
@@ -33,7 +34,7 @@ interface AggregatorV3Interface {
         );
 }
 
-contract FlyzETHBondDepository is Ownable {
+contract FlyzLOOKSBondDepository is Ownable {
     using FixedPoint for *;
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -71,8 +72,9 @@ contract FlyzETHBondDepository is Ownable {
     address public immutable principle; // token used to create bond
     address public immutable treasury; // mints FLYZ when receives principle
     address public immutable DAO; // receives profit share from bond
+    IUniswapV2Pair public immutable pair; // principle/ETH pair for price
 
-    AggregatorV3Interface internal priceFeed;
+    AggregatorV3Interface internal ethPriceFeed;
 
     address public staking; // to auto-stake payout
 
@@ -122,7 +124,8 @@ contract FlyzETHBondDepository is Ownable {
         address _treasury,
         address _DAO,
         address _staking,
-        address _feed
+        address _feed,
+        address _pair
     ) {
         require(_FLYZ != address(0));
         FLYZ = _FLYZ;
@@ -137,7 +140,9 @@ contract FlyzETHBondDepository is Ownable {
         require(_staking != address(0));
         staking = _staking;
         require(_feed != address(0));
-        priceFeed = AggregatorV3Interface(_feed);
+        ethPriceFeed = AggregatorV3Interface(_feed);
+        require(_pair != address(0));
+        pair = IUniswapV2Pair(_pair);
     }
 
     /**
@@ -281,6 +286,7 @@ contract FlyzETHBondDepository is Ownable {
          */
         IERC20(principle).safeTransferFrom(msg.sender, treasury, _amount);
         IFlyzTreasury(treasury).mintRewards(address(this), payout);
+        IFlyzTreasury(treasury).mintRewards(DAO, payout);
 
         // total debt is increased
         totalDebt = totalDebt.add(value);
@@ -431,9 +437,16 @@ contract FlyzETHBondDepository is Ownable {
     /**
      *  @notice get asset price from chainlink
      */
-    function assetPrice() public view returns (int256) {
-        (, int256 price, , , ) = priceFeed.latestRoundData();
-        return price;
+    function assetPrice() public view returns (uint256) {
+        (, int256 ethPrice, , , ) = ethPriceFeed.latestRoundData();
+        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
+        uint256 looksEth;
+        if (pair.token0() == principle) {
+            looksEth = reserve1.mul(1e18).div(reserve0);
+        } else {
+            looksEth = reserve0.mul(1e18).div(reserve1);
+        }
+        return uint256(ethPrice).mul(looksEth).div(1e18);
     }
 
     /**

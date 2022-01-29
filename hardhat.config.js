@@ -33,6 +33,7 @@ module.exports = {
     hardhat: {
       chainId,
       gas: 'auto',
+      forking: { url: mainnetRPC },
     },
     mainnet: {
       url: mainnetRPC,
