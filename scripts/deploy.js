@@ -3,38 +3,31 @@
 const { ethers } = require('hardhat')
 const UniswapV2ABI = require('./IUniswapV2Factory.json').abi
 
-const DAI = '0xa3Fa99A148fA48D14Ed51d610c367C61876997F1'
+const LOOKS = '0xf4d2888d29d722226fafa5d9b24f9164c092421e'
 const WETH = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 const UNISWAP_FACTORY = '0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f'
 const TIME_LOCK = '1' // 6600 blocks ~ 86400 seconds
+const firstEpochTime = 1642377600 // 2022-1-17 00:00 UTC set to the launch date
+console.log('First epoch timestamp: ' + firstEpochTime)
 
 async function main() {
-  const [deployer] = await ethers.getSigners()
-  const daoAddr = '0x87f0FC01d3D05ECD83a9e400B51D4c06bc5cEfeb'
+  const deployer = await ethers.getSigner()
   console.log('Deploying contracts with the account: ' + deployer.address)
 
   // Initial staking index
   const initialIndex = '1000000000'
-
-  const firstEpochTime = 1642377600 // 2022-1-17 00:00 UTC
-  console.log('First epoch timestamp: ' + firstEpochTime)
 
   // What epoch will be first epoch
   const firstEpochNumber = '1'
 
   // How many seconds are in each epoch
   const epochLengthInSeconds = 86400 / 3
-  // const epochLengthInSeconds = 60*10
 
   // Initial reward rate for epoch
   const initialRewardRate = '5000'
 
-  // Ethereum 0 address, used when toggling changes in treasury
-  const zeroAddress = '0x0000000000000000000000000000000000000000'
-
-  const warmupPeriod = '0'
-
-  // const chainId = (await provider.getNetwork()).chainId
+  // 15 epoch = 5 days
+  const warmupPeriod = '15'
 
   const FLYZ = await ethers.getContractFactory('FlyzERC20')
   const flyz = await FLYZ.deploy()
@@ -60,7 +53,7 @@ async function main() {
   const Treasury = await ethers.getContractFactory('FlyzTreasury')
   const treasury = await Treasury.deploy(
     flyz.address,
-    DAI,
+    LOOKS,
     lpAddress,
     bondingCalculator.address,
     TIME_LOCK
@@ -109,27 +102,32 @@ async function main() {
 
   console.log(
     JSON.stringify({
-      SFLYZ_ADDRESS: sFlyz.address,
       FLYZ_ADDRESS: flyz.address,
-      // MAI_ADDRESS: maiAddr,
+      SFLYZ_ADDRESS: sFlyz.address,
       TREASURY_ADDRESS: treasury.address,
       BONDING_CALC_ADDRESS: bondingCalculator.address,
       STAKING_ADDRESS: staking.address,
       STAKING_HELPER_ADDRESS: stakingHelper.address,
+      STAKING_WARMUP_ADDRESS: stakingWarmup.address,
+      STAKING_DISTRIBUTOR_ADDRESS: stakingDistributor.address,
     })
   )
 
   // Initialize sFlyz and set the index
   await (await sFlyz.initialize(staking.address)).wait()
   await (await sFlyz.setIndex(initialIndex)).wait()
+  console.log('setup sFlyz')
 
   // set distributor contract and warmup contract
   await (await staking.setContract('0', stakingDistributor.address)).wait()
   await (await staking.setContract('1', stakingWarmup.address)).wait()
   await (await staking.setWarmup(warmupPeriod)).wait()
 
+  console.log('setup staking')
+
   // Set treasury for FLYZ token
   await (await flyz.setVault(treasury.address)).wait()
+  console.log('setup vault')
 
   // Add staking contract as distributor recipient
   await (
@@ -137,7 +135,11 @@ async function main() {
   ).wait()
 
   // queue and toggle reward manager
+  await (await treasury.queue('0', deployer.address)).wait()
+  await (await treasury.queue('4', deployer.address)).wait()
   await (await treasury.queue('8', stakingDistributor.address)).wait()
+
+  console.log('setup treasury')
 }
 
 main()
