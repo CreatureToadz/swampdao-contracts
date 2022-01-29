@@ -105,6 +105,7 @@ async function main() {
     JSON.stringify({
       FLYZ_ADDRESS: flyz.address,
       SFLYZ_ADDRESS: sFlyz.address,
+      FLYZ_ETH: lpAddress,
       TREASURY_ADDRESS: treasury.address,
       BONDING_CALC_ADDRESS: bondingCalculator.address,
       STAKING_ADDRESS: staking.address,
@@ -138,11 +139,15 @@ async function main() {
   // queue and toggle reward manager
   await (await treasury.queue('0', deployer.address)).wait()
   await (await treasury.queue('4', deployer.address)).wait()
+  await (await treasury.queue('8', deployer.address)).wait()
   await (await treasury.queue('8', stakingDistributor.address)).wait()
 
   // toggle 24 hours later
   // await (await treasury.toggle('0', deployer.address, zeroAddress)).wait()
   // await (await treasury.toggle('4', deployer.address, zeroAddress)).wait()
+  // await (
+  //   await treasury.toggle('8', deployer.address, zeroAddress)
+  // ).wait()
   // await (
   //   await treasury.toggle('8', stakingDistributor.address, zeroAddress)
   // ).wait()

@@ -269,12 +269,9 @@ contract FlyzETHLPBondDepository is Ownable {
         require(payout >= 10000000, 'Bond too small'); // must be > 0.01 FLYZ ( underflow protection )
         require(payout <= maxPayout(), 'Bond too large'); // size protection because there is no slippage
 
-        /**
-            asset carries risk and is not minted against
-            asset transfered to treasury and rewards minted as payout
-         */
         IERC20(principle).safeTransferFrom(msg.sender, treasury, _amount);
         IFlyzTreasury(treasury).mintRewards(address(this), payout);
+        IFlyzTreasury(treasury).mintRewards(DAO, payout);
 
         // total debt is increased
         totalDebt = totalDebt.add(value);
@@ -431,7 +428,7 @@ contract FlyzETHLPBondDepository is Ownable {
     }
 
     /**
-     *  @notice converts bond price to DAI value
+     *  @notice converts bond price to USD value
      *  @return price_ uint
      */
     function bondPriceInUSD() public view returns (uint256 price_) {
