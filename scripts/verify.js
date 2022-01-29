@@ -42,7 +42,7 @@ async function main() {
   await verify(addresses.TREASURY_ADDRESS.address, [
     addresses.FLYZ_ADDRESS,
     LOOKS,
-    addresses.FLYZ_ADDRESS,
+    addresses.FLYZ_ETH,
     addresses.BONDING_CALC_ADDRESS,
     TIME_LOCK,
   ])
