@@ -6,6 +6,7 @@ const UniswapV2ABI = require('./IUniswapV2Factory.json').abi
 const LOOKS = '0xf4d2888d29d722226fafa5d9b24f9164c092421e'
 const WETH = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 const UNISWAP_FACTORY = '0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f'
+const zeroAddress = '0x0000000000000000000000000000000000000000'
 const TIME_LOCK = '1' // 6600 blocks ~ 86400 seconds
 const firstEpochTime = 1642377600 // 2022-1-17 00:00 UTC set to the launch date
 console.log('First epoch timestamp: ' + firstEpochTime)
@@ -138,6 +139,13 @@ async function main() {
   await (await treasury.queue('0', deployer.address)).wait()
   await (await treasury.queue('4', deployer.address)).wait()
   await (await treasury.queue('8', stakingDistributor.address)).wait()
+
+  // toggle 24 hours later
+  // await (await treasury.toggle('0', deployer.address, zeroAddress)).wait()
+  // await (await treasury.toggle('4', deployer.address, zeroAddress)).wait()
+  // await (
+  //   await treasury.toggle('8', stakingDistributor.address, zeroAddress)
+  // ).wait()
 
   console.log('setup treasury')
 }
