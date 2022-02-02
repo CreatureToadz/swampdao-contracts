@@ -387,7 +387,7 @@ contract FlyzETHLPBondDepository is Ownable {
     function payoutFor(uint256 _value) public view returns (uint256) {
         return
             FixedPoint.fraction(_value, bondPrice()).decode112with18().div(
-                1e16
+                1e18
             );
     }
 
@@ -435,7 +435,7 @@ contract FlyzETHLPBondDepository is Ownable {
         price_ = bondPrice()
             .mul(IFlyzBondingCalculator(bondCalculator).markdown(principle))
             .mul(uint256(assetPrice()))
-            .div(1e10);
+            .div(1e12);
     }
 
     /**
