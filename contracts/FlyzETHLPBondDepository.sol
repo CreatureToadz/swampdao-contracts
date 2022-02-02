@@ -387,7 +387,7 @@ contract FlyzETHLPBondDepository is Ownable {
     function payoutFor(uint256 _value) public view returns (uint256) {
         return
             FixedPoint.fraction(_value, bondPrice()).decode112with18().div(
-                1e18
+                1e14
             );
     }
 
