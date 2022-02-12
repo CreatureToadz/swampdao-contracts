@@ -1,6 +1,10 @@
 node_modules/
 artifacts/
 cache/
+coverage
+coverage.json
+types
+abi
 
 yarn-error.log
 .secret*
@@ -8,3 +12,5 @@ whitelist.txt
 .vscode/settings.json
 .env
 
+
+.DS_Store

@@ -1,7 +1,12 @@
-require('@nomiclabs/hardhat-waffle')
-require('@atixlabs/hardhat-time-n-mine')
-require('@nomiclabs/hardhat-etherscan')
-require('dotenv').config()
+import '@nomiclabs/hardhat-waffle'
+import '@atixlabs/hardhat-time-n-mine'
+import '@nomiclabs/hardhat-etherscan'
+import 'hardhat-abi-exporter'
+import 'hardhat-gas-reporter'
+import '@typechain/hardhat'
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 const deployer = process.env.DEPLOYER_PRIVATE_KEY
 const etherscanApiKey = process.env.ETHERSCAN_API_KEY
@@ -49,5 +54,32 @@ module.exports = {
   },
   mocha: {
     timeout: 5 * 60 * 10000,
+  },
+
+  gasReporter: {
+    enabled: process.env.REPORT_GAS !== undefined,
+    currency: 'usd',
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+    gasPrice:
+      process.env.GAS_PRICE !== undefined
+        ? parseInt(process.env.GAS_PRICE)
+        : undefined,
+  },
+
+  abiExporter: {
+    path: './abi',
+    clear: false,
+    flat: true,
+    runOnCompile: true,
+    // only: [':ERC20$'],
+    only: [':Flyz*', ':sFlyz*'],
+    except: [':*Mock$', ':*Test$'],
+    spacing: 2,
+    pretty: false,
+  },
+
+  typechain: {
+    outDir: './types',
+    target: 'ethers-v5',
   },
 }
