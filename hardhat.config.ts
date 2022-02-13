@@ -4,6 +4,7 @@ import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-abi-exporter'
 import 'hardhat-gas-reporter'
 import '@typechain/hardhat'
+import 'hardhat-deploy'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -43,6 +44,7 @@ module.exports = {
     mainnet: {
       url: mainnetRPC,
       accounts: deployer ? [deployer] : deployer,
+      gasMultiplier: 1.1,
     },
     rinkeby: {
       url: rinkebyRPC,
@@ -81,5 +83,13 @@ module.exports = {
   typechain: {
     outDir: './types',
     target: 'ethers-v5',
+  },
+
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      4: '0xAeD9A2acFdFAC17AFF3c6ecf20D412E601d13A90',
+      1: '0xAeD9A2acFdFAC17AFF3c6ecf20D412E601d13A90',
+    },
   },
 }

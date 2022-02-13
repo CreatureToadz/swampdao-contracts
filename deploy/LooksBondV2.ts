@@ -1,3 +1,6 @@
+import { getNamedAccounts } from 'hardhat'
+import { DeployFunction } from 'hardhat-deploy/types'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { ContractTransaction } from 'ethers'
 import hre, { ethers } from 'hardhat'
 
@@ -41,68 +44,89 @@ export async function executeTx(
   }
 }
 
-async function verify(address: string, constructorArguments?: any[]) {
-  try {
-    await hre.run('verify:verify', {
-      address,
-      constructorArguments,
-    })
-  } catch (err: any) {
-    console.warn(`verify failed: ${address} ${err.message}`)
-  }
+const delay = (ms: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 }
 
-async function main() {
-  const [deployer] = await hre.ethers.getSigners()
+const DEPLOYMENT_NAME = 'LooksBondV2'
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  const { deployments } = hre
+  const { deployer } = await getNamedAccounts()
+  const deployerSigner = await ethers.getSigner(deployer)
 
-  console.log('Deploying contracts with the account: ' + deployer.address)
+  const wrappedLooksDeployment = await deployments.deploy('FlyzWrappedLOOKS', {
+    from: deployer,
+    log: true,
+    autoMine: true,
+    skipIfAlreadyDeployed: true,
+    contract: 'FlyzWrappedLOOKS',
+  })
 
-  // deploy looks bond receipt
-  console.log(`deploying FlyzWrappedLOOKS...`)
-  const FlyzWrappedLOOKS = await ethers.getContractFactory('FlyzWrappedLOOKS')
-  const wrappedLooks = await FlyzWrappedLOOKS.deploy()
-  await wrappedLooks.deployTransaction.wait()
-  console.log('wrappedLooks deployed: ' + wrappedLooks.address)
+  console.log('wrappedLooks deployed: ' + wrappedLooksDeployment.address)
 
   // deploy capacitor
   console.log(`deploying FlyzLOOKSCapacitor...`)
-  const FlyzLOOKSCapacitor = await ethers.getContractFactory(
-    'FlyzLOOKSCapacitor'
-  )
-  const capacitor = await FlyzLOOKSCapacitor.deploy(
-    FLYZ,
-    LOOKS,
-    LOOKS_STAKING,
-    wrappedLooks.address,
-    FLYZ_TREASURY,
-    UNISWAP_ROUTER
-  )
-  await capacitor.deployTransaction.wait()
-  console.log('capacitor deployed: ' + capacitor.address)
+  const capacitorDeployment = await deployments.deploy('FlyzLOOKSCapacitor', {
+    from: deployer,
+    args: [
+      FLYZ,
+      LOOKS,
+      LOOKS_STAKING,
+      wrappedLooksDeployment.address,
+      FLYZ_TREASURY,
+      UNISWAP_ROUTER,
+    ],
+    log: true,
+    autoMine: true,
+    skipIfAlreadyDeployed: true,
+    contract: 'FlyzLOOKSCapacitor',
+  })
+
+  console.log('capacitor deployed: ' + capacitorDeployment.address)
 
   // deploy bond V2
   console.log(`deploying FlyzLOOKSBondDepositoryV2...`)
-  const FlyzLOOKSBondDepositoryV2 = await ethers.getContractFactory(
-    'FlyzLOOKSBondDepositoryV2'
-  )
-  const bondDepositoryV2 = await FlyzLOOKSBondDepositoryV2.deploy(
-    FLYZ,
-    sFLYZ,
-    LOOKS,
-    FLYZ_TREASURY,
-    DAO,
-    FLYZ_STAKING,
-    ETH_FEED,
-    LOOKS_WETH_LP,
-    capacitor.address
-  )
-  await bondDepositoryV2.deployTransaction.wait()
-  console.log('bondDepositoryV2 deployed: ' + bondDepositoryV2.address)
+  const bondDeployment = await deployments.deploy('FlyzLOOKSBondDepositoryV2', {
+    from: deployer,
+    args: [
+      FLYZ,
+      sFLYZ,
+      LOOKS,
+      FLYZ_TREASURY,
+      DAO,
+      FLYZ_STAKING,
+      ETH_FEED,
+      LOOKS_WETH_LP,
+      capacitorDeployment.address,
+    ],
+    log: true,
+    autoMine: true,
+    skipIfAlreadyDeployed: true,
+    contract: 'FlyzLOOKSBondDepositoryV2',
+  })
+  console.log('bondDepositoryV2 deployed: ' + bondDeployment.address)
 
+  const wrappedLooks = await ethers.getContractAt(
+    'wrappedLooks',
+    wrappedLooksDeployment.address,
+    deployerSigner
+  )
+  const capacitor = await ethers.getContractAt(
+    'FlyzLOOKSCapacitor',
+    capacitorDeployment.address,
+    deployerSigner
+  )
+  const bondDepositoryV2 = await ethers.getContractAt(
+    'FlyzLOOKSBondDepositoryV2',
+    bondDeployment.address,
+    deployerSigner
+  )
   const treasury = await ethers.getContractAt(
     'FlyzTreasury',
     FLYZ_TREASURY,
-    deployer
+    deployerSigner
   )
 
   // configure wrapped looks treasury
@@ -143,30 +167,9 @@ async function main() {
     )
   )
 
-  // wait & verify contracts
-  // verify wrapped looks
-  await verify(wrappedLooks.address)
-  // verify capacitor
-  await verify(capacitor.address, [
-    FLYZ,
-    LOOKS,
-    LOOKS_STAKING,
-    wrappedLooks.address,
-    FLYZ_TREASURY,
-    UNISWAP_ROUTER,
-  ])
-  // verify LOOKS bond
-  await verify(bondDepositoryV2.address, [
-    FLYZ,
-    sFLYZ,
-    LOOKS,
-    FLYZ_TREASURY,
-    DAO,
-    FLYZ_STAKING,
-    ETH_FEED,
-    LOOKS_WETH_LP,
-    capacitor.address,
-  ])
+  // wait
+  console.log(`wait 30s...`)
+  await delay(30000)
 
   // toggle everything
   await executeTx(
@@ -191,12 +194,5 @@ async function main() {
   )
 }
 
-main()
-  .then(() => {
-    console.log('done.')
-    process.exit()
-  })
-  .catch((error) => {
-    console.error(error)
-    process.exit(1)
-  })
+export default func
+func.tags = [DEPLOYMENT_NAME]
