@@ -195,14 +195,15 @@ contract FlyzLOOKSCapacitor is Ownable {
     function _swap(address pair, address token, uint256 amount, address to) internal returns (uint256) {
         address token0 = IUniswapV2Pair(pair).token0();
         address token1 = IUniswapV2Pair(pair).token1();
+        address otherToken = token0 == token ? token1 : token0;
 
         address[] memory path = new address[](2);
         path[0] = token0 == token ? token0 : token1;
-        path[1] = token0 == token ? token1 : token0;
+        path[1] = otherToken;
 
-        uint256 balance = IERC20(token).balanceOf(address(this));
-        IUniswapV2Router02(swapRouter).swapExactTokensForTokens(amount, 0, path, to, block.number);
-        uint256 newBalance = IERC20(token).balanceOf(address(this));
+        uint256 balance = IERC20(otherToken).balanceOf(address(this));
+        IUniswapV2Router02(swapRouter).swapExactTokensForTokens(amount, 0, path, to, block.timestamp);
+        uint256 newBalance = IERC20(otherToken).balanceOf(address(this));
 
         return newBalance - balance;
     }
@@ -223,7 +224,7 @@ contract FlyzLOOKSCapacitor is Ownable {
         uint256 flyzReceived = _swap(flyzLP, weth, wethAmount, address(this));
 
         // add liquidity to flyz LP
-        IUniswapV2Router02(swapRouter).addLiquidity(flyz, weth, flyzReceived, wethAmount, 0, 0, address(this), block.number);
+        IUniswapV2Router02(swapRouter).addLiquidity(flyz, weth, flyzReceived, wethAmount, 0, 0, address(this), block.timestamp);
 
         // add to the treasury with 100% profit
         uint256 lpAmount = IERC20(flyzLP).balanceOf(address(this));

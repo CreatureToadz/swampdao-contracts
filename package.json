@@ -12,7 +12,9 @@
     "lint:sol": "solhint -f table **/*.sol",
     "format:sol": "./node_modules/.bin/prettier --write **/*.sol",
     "deploy-bond-v2": "hardhat deploy --tags LooksBondV2 --network mainnet",
-    "verify": "hardhat run --network mainnet ./scripts/verify-bondv2.ts"
+    "verify": "hardhat run --network mainnet ./scripts/verify-bondv2.ts",
+    "deploy-capacitor-v2": "hardhat deploy --tags LooksCapacitorV2 --network mainnet",
+    "verify-capacitor": "hardhat run --network mainnet ./scripts/verify-capacitor.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.0",
