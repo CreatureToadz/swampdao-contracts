@@ -109,7 +109,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log('bondDepositoryV2 deployed: ' + bondDeployment.address)
 
   const wrappedLooks = await ethers.getContractAt(
-    'wrappedLooks',
+    'FlyzWrappedLOOKS',
     wrappedLooksDeployment.address,
     deployerSigner
   )
@@ -134,7 +134,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     'add wrapped LOOKS as a reserve token',
     treasury.queue(MANAGING.RESERVETOKEN, wrappedLooks.address)
   )
+  await executeTx(
+    'add capacitor as minter',
+    wrappedLooks.addMinter(capacitor.address)
+  )
 
+  // configure depositor in capacitor
+  await executeTx(
+    'add bond as depositor in capacitor',
+    capacitor.addDepositor(bondDepositoryV2.address)
+  )
   // configure capacitor access in treasury
   await executeTx(
     'queue capacitor as RESERVEDEPOSITOR',
@@ -174,23 +183,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // toggle everything
   await executeTx(
     'toggle wrapped looks as RESERVETOKEN',
-    treasury.queue(MANAGING.RESERVETOKEN, wrappedLooks.address)
+    treasury.toggle(MANAGING.RESERVETOKEN, wrappedLooks.address, ethers.constants.AddressZero)
   )
   await executeTx(
     'toggle capacitor as RESERVEDEPOSITOR',
-    treasury.queue(MANAGING.RESERVEDEPOSITOR, capacitor.address)
+    treasury.toggle(MANAGING.RESERVEDEPOSITOR, capacitor.address, ethers.constants.AddressZero)
   )
   await executeTx(
     'toggle capacitor as RESERVESPENDER',
-    treasury.queue(MANAGING.RESERVESPENDER, capacitor.address)
+    treasury.toggle(MANAGING.RESERVESPENDER, capacitor.address, ethers.constants.AddressZero)
   )
   await executeTx(
     'toggle capacitor as LIQUIDITYDEPOSITOR',
-    treasury.queue(MANAGING.LIQUIDITYDEPOSITOR, capacitor.address)
+    treasury.toggle(MANAGING.LIQUIDITYDEPOSITOR, capacitor.address, ethers.constants.AddressZero)
   )
   await executeTx(
     'toggle bond as REWARDMANAGER',
-    treasury.queue(MANAGING.REWARDMANAGER, bondDepositoryV2.address)
+    treasury.toggle(MANAGING.REWARDMANAGER, bondDepositoryV2.address, ethers.constants.AddressZero)
   )
 }
 
