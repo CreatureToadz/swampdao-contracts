@@ -192,7 +192,7 @@ contract FlyzLOOKSCapacitor is Ownable {
     /**
      * @dev Swap helper function
      */
-    function _swap(address pair, address token, uint256 amount, address to) internal returns (uint256) {
+    function _swap(address pair, address token, uint256 amount, address to, uint256 slippage) internal returns (uint256) {
         address token0 = IUniswapV2Pair(pair).token0();
         address token1 = IUniswapV2Pair(pair).token1();
         address otherToken = token0 == token ? token1 : token0;
@@ -201,8 +201,10 @@ contract FlyzLOOKSCapacitor is Ownable {
         path[0] = token0 == token ? token0 : token1;
         path[1] = otherToken;
 
+        uint256 amountOut = IUniswapV2Router02(swapRouter).getAmountsOut(amount, path)[1];
+
         uint256 balance = IERC20(otherToken).balanceOf(address(this));
-        IUniswapV2Router02(swapRouter).swapExactTokensForTokens(amount, 0, path, to, block.timestamp);
+        IUniswapV2Router02(swapRouter).swapExactTokensForTokens(amount, amountOut.mul(100000 - slippage).div(100000), path, to, block.timestamp);
         uint256 newBalance = IERC20(otherToken).balanceOf(address(this));
 
         return newBalance - balance;
@@ -210,21 +212,36 @@ contract FlyzLOOKSCapacitor is Ownable {
 
     /**
      * @notice Swap LOOKS to WETH, swap WETH to FLYZ, add liquidity to FLYZ/WETH LP and send LP to treasury with 100% profit
+     * @param looksAmount amount of LOOKS to swap
+     * @param swapSlippage max slippage to use for swap ([0 - 100000], ie 500 = 0.5% slippage)
+     * @param liquiditySlippage max slippage to use when depositing liquidity ([0 - 100000], ie 5000 = 5% slippage)
      */
-    function swapAndSendFlyzLPToTreasury(uint256 looksAmount) external onlyOnwerOrDepositor {
+    function swapAndSendFlyzLPToTreasury(uint256 looksAmount, uint256 swapSlippage, uint256 liquiditySlippage) external onlyOnwerOrDepositor {
+        require(swapSlippage <= 100000, "Invalid swap slippage");
+        require(liquiditySlippage <= 100000, "Invalid liquidity slippage");
+
         // swap looks to weth
         if (looksAmount > 0) {
             require(looksAmount <= IERC20(looks).balanceOf(address(this)), "Capacitor: over LOOKS balance");
-            _swap(looksLP, looks, looksAmount, address(this));
+            _swap(looksLP, looks, looksAmount, address(this), swapSlippage);
         }
 
         // buy back flyz
         uint256 wethAmount = IERC20(weth).balanceOf(address(this)).div(2);
         require(wethAmount > 0, "Capacitor: WETH balance is 0");
-        uint256 flyzReceived = _swap(flyzLP, weth, wethAmount, address(this));
+        uint256 flyzReceived = _swap(flyzLP, weth, wethAmount, address(this), swapSlippage);
 
         // add liquidity to flyz LP
-        IUniswapV2Router02(swapRouter).addLiquidity(flyz, weth, flyzReceived, wethAmount, 0, 0, address(this), block.timestamp);
+        IUniswapV2Router02(swapRouter).addLiquidity(
+            flyz,
+            weth,
+            flyzReceived,
+            wethAmount,
+            flyzReceived.mul(100000 - liquiditySlippage).div(100000),
+            wethAmount.mul(100000 - liquiditySlippage).div(100000),
+            address(this),
+            block.timestamp
+        );
 
         // add to the treasury with 100% profit
         uint256 lpAmount = IERC20(flyzLP).balanceOf(address(this));
