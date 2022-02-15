@@ -14,7 +14,8 @@
     "deploy-bond-v2": "hardhat deploy --tags LooksBondV2 --network mainnet",
     "verify": "hardhat run --network mainnet ./scripts/verify-bondv2.ts",
     "deploy-capacitor-v2": "hardhat deploy --tags LooksCapacitorV2 --network mainnet",
-    "verify-capacitor": "hardhat run --network mainnet ./scripts/verify-capacitor.ts"
+    "verify-capacitor": "hardhat run --network mainnet ./scripts/verify-capacitor.ts",
+    "sendLooksToTreasury": "hardhat run --network mainnet ./scripts/sendLooksToTreasury.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.0",
