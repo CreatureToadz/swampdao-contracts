@@ -24,7 +24,8 @@ async function main() {
     }
   }
 
-  await verifyContract('FlyzLOOKSCapacitor')
+  // await verifyContract('FlyzLOOKSCapacitor')
+  await verifyContract('FlyzLOOKSCapacitorV3')
 }
 
 main()

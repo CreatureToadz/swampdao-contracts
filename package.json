@@ -14,6 +14,7 @@
     "deploy-bond-v2": "hardhat deploy --tags LooksBondV2 --network mainnet",
     "verify": "hardhat run --network mainnet ./scripts/verify-bondv2.ts",
     "deploy-capacitor-v2": "hardhat deploy --tags LooksCapacitorV2 --network mainnet",
+    "deploy-capacitor-v3": "hardhat deploy --tags LooksCapacitorV3 --network mainnet",
     "verify-capacitor": "hardhat run --network mainnet ./scripts/verify-capacitor.ts",
     "sendLooksToTreasury": "hardhat run --network mainnet ./scripts/sendLooksToTreasury.ts"
   },
